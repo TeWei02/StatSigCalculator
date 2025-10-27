@@ -22,11 +22,53 @@ function App() {
 
   const [results, setResults] = useState<CalculatorResults | null>(null)
   const [showTooltip, setShowTooltip] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const getZScore = (p: number): number => {
+    if (p <= 0 || p >= 1) {
+      throw new Error('Probability must be between 0 and 1')
+    }
+    
+    if (p === 0.5) return 0
+    
+    const q = p < 0.5 ? p : 1 - p
+    const t = Math.sqrt(-2 * Math.log(q))
+    
+    const c0 = 2.515517
+    const c1 = 0.802853
+    const c2 = 0.010328
+    const d1 = 1.432788
+    const d2 = 0.189269
+    const d3 = 0.001308
+    
+    const numerator = c0 + c1 * t + c2 * t * t
+    const denominator = 1 + d1 * t + d2 * t * t + d3 * t * t * t
+    const z = t - numerator / denominator
+    
+    return p < 0.5 ? -z : z
+  }
 
   const calculateSampleSize = (params: CalculatorInputs): CalculatorResults => {
+    if (params.baselineRate <= 0 || params.baselineRate >= 100) {
+      throw new Error('Baseline conversion rate must be between 0 and 100')
+    }
+    if (params.minEffect <= 0) {
+      throw new Error('Minimum detectable effect must be greater than 0')
+    }
+    if (params.power <= 0 || params.power >= 100) {
+      throw new Error('Statistical power must be between 0 and 100')
+    }
+    if (params.significance <= 0 || params.significance >= 100) {
+      throw new Error('Significance level must be between 0 and 100')
+    }
+    
     const p1 = params.baselineRate / 100
     const relativeEffect = params.minEffect / 100
     const p2 = p1 * (1 + relativeEffect)
+    
+    if (p2 > 1) {
+      throw new Error('The combination of baseline rate and minimum effect results in an invalid conversion rate (>100%). Please adjust your parameters.')
+    }
     
     const alpha = params.significance / 100
     const beta = 1 - (params.power / 100)
@@ -34,14 +76,26 @@ function App() {
     const zAlpha = getZScore(1 - alpha / 2)
     const zBeta = getZScore(1 - beta)
     
+    if (!isFinite(zAlpha) || !isFinite(zBeta)) {
+      throw new Error('Invalid statistical parameters')
+    }
+    
     const pooledP = (p1 + p2) / 2
     const pooledVariance = pooledP * (1 - pooledP)
     
     const numerator = Math.pow(zAlpha * Math.sqrt(2 * pooledVariance) + zBeta * Math.sqrt(p1 * (1 - p1) + p2 * (1 - p2)), 2)
     const denominator = Math.pow(p2 - p1, 2)
     
+    if (denominator === 0) {
+      throw new Error('Minimum detectable effect cannot be zero')
+    }
+    
     const sampleSizePerVariation = Math.ceil(numerator / denominator)
     const totalSampleSize = sampleSizePerVariation * 2
+    
+    if (!isFinite(sampleSizePerVariation) || sampleSizePerVariation <= 0) {
+      throw new Error('Unable to calculate sample size with the given parameters')
+    }
     
     return {
       sampleSizePerVariation,
@@ -49,25 +103,14 @@ function App() {
     }
   }
 
-  const getZScore = (probability: number): number => {
-    const z = Math.sqrt(2) * inverseErrorFunction(2 * probability - 1)
-    return z
-  }
-
-  const inverseErrorFunction = (x: number): number => {
-    const a = 0.147
-    const b = 2 / (Math.PI * a) + Math.log(1 - x * x) / 2
-    const sqrt1 = Math.sqrt(b * b - Math.log(1 - x * x) / a)
-    const sqrt2 = Math.sqrt(sqrt1 - b)
-    return sqrt2 * Math.sign(x)
-  }
-
   useEffect(() => {
     try {
       const calculatedResults = calculateSampleSize(inputs)
       setResults(calculatedResults)
-    } catch (error) {
+      setError(null)
+    } catch (err) {
       setResults(null)
+      setError(err instanceof Error ? err.message : 'An error occurred during calculation')
     }
   }, [inputs])
 
@@ -229,6 +272,20 @@ function App() {
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border-2 border-warning-red rounded-lg p-6 mb-8">
+            <div className="flex items-start gap-3">
+              <svg className="w-6 h-6 text-warning-red flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <h3 className="text-lg font-semibold text-warning-red mb-1">Calculation Error</h3>
+                <p className="text-sm text-gray-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {results && (
           <div className="space-y-6">
