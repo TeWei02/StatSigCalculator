@@ -1,5 +1,7 @@
 # StatSigCalculator — A/B Test Statistical Significance & Sample Size Calculator
 
+**Language:** [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-%E4%B8%AD%E6%96%87%E7%89%88-blue?style=flat-square)](README.md) [![English](https://img.shields.io/badge/English-English-blue?style=flat-square)](README.en.md)
+
 [![Live](https://img.shields.io/badge/Live-tewei02.github.io%2FStatSigCalculator-6366f1?logo=github)](https://tewei02.github.io/StatSigCalculator/)
 [![React](https://img.shields.io/badge/React-19-%2361DAFB?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-%233178C6?logo=typescript)](https://www.typescriptlang.org/)
