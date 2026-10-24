@@ -1,4 +1,6 @@
-# StatSigCalculator — A/B Test Statistical Significance & Sample Size Calculator
+# StatSigCalculator
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) — A/B Test Statistical Significance & Sample Size Calculator
 
 **Language:** [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-%E4%B8%AD%E6%96%87%E7%89%88-blue?style=flat-square)](README.md) [![English](https://img.shields.io/badge/English-English-blue?style=flat-square)](README.en.md)
 
@@ -46,6 +48,11 @@ An interactive statistical significance calculator for A/B testing. Instantly de
 npm install
 npm run dev
 ```
+
+### Prerequisites
+
+- Node.js 18+（Vite + TypeScript 專案）
+- `npm run build` 需搭配 TypeScript 5.x 編譯
 
 Build for production:
 
